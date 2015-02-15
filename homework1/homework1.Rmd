@@ -11,7 +11,11 @@ I should be able to knit this file and reproduce the html, pdf, or word document
 A block to load in the data:
 ```{r}
 rm(list=ls()) # Clean the workspace to be empty
+<<<<<<< HEAD
 arbuthnot <- read.csv('/Users/sarahbleakney/Documents/geog415/sbleakne/homework1/data/arbuthnot.csv')
+=======
+arbuthnot <- read.csv('/Users/nnagle/Dropbox/git_root/homework/homework1/data/arbuthnot.csv')
+>>>>>>> FETCH_HEAD
 ```
 
 # Question 1
