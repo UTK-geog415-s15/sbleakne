@@ -1,0 +1,108 @@
+---
+title: "lab2_homework"
+author: "Sarah Bleakney"
+date: "February 2, 2015"
+output: pdf_document
+---
+
+# Part 1. Analysis of El Malpais data
+
+What do the tree ring data tell us about monthly precipitation?
+They can give us a rough estimate of past precipitation. However, tree rings record all types of signals, and the precipitation signal could potentially get lost.
+
+Write up a short report (~ 2 paragraphs) answering the following questions:
+
+- Describe the monthly rainfall pattern.  
+- During what months is tree ring width correlated with rainfall?
+- How appropriate is (linear) correlation as a description of the relationship between tree ring width and monthly rainfall?
+- If you had to create a 12 month period that was correlated with tree ring width, what 12 months would those be?
+
+
+As we can see from Figure 1, precipitation is unevenly distributed throughout the months. The late summer and fall months seem to get the most precipitation according to the data. The Spring and Winter months stay fairly consistent, hovering slightly below 1 inch. July, with ~2.7 inches, and August, with ~2.9 inches, stand out above the rest of the months.
+
+January sees a higher correlation between  tree ring width and rainfall than August, as we can see from Figures 2 and 3. This is confirmed in Figure 4. Looking at Figure 4, we see that winter and spring months have higher correlations than summer and fall months.If I had to create a 12 month period that was correlated with tree ring width, I suppose I would pick twelve winter and spring months, since the highest correlation is seen january through May. If we looked at a graph from august to august there might be a more linear trend, but it is still not exact. So, a linear relationship could work, but it would take some manipulating, and there could be a better option.
+
+In answering these questions, I want to see:
+
+ - A bar chart or line graph showing average rainfall each month.
+ 
+ 
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(magrittr)
+```
+
+
+```{r}
+temp.data <- group_by(tidy.precip, month) 
+temp.data <- summarize(temp.data, precip=mean(precip, na.rm=TRUE)) 
+ggplot(temp.data, aes(month, precip)) + geom_bar(stat='identity') + labs(y='Precipitation (in)', title ="Figure 1")
+```
+ 
+ - Two scatterplots of tree ring width and precipitation, one with the current January, and one with the current August.  Use these to assess whether the relationship is approximately linear or not at all linear.
+ 
+```{r}
+ggplot(data=aug.data) + geom_point(aes(x=rwi,y=precip)) + labs(y="Precip (in)", title="Figure 2: August Precipitation")
+```
+
+```{r}
+ggplot(data=jan.data) + geom_point(aes(x=rwi,y=precip)) + labs(y="Precip (in)", title="Figure 3: January Precipitation")
+```
+ 
+ - Two (or one) plots showing the correlation at every month between tree ring width and precipitation, for both the current year and the previous year.  If you can get both current and previous (lagged) year on one plot, then great.
+ 
+ 
+ 
+```{r}
+ggplot(data=tree_precip) + geom_point(aes(x=month,y=r)) + labs(y="r", title="Figure 4: Correlations")
+```
+
+```{r}
+ggplot(data=rvalues) + geom_point(aes(x=Month,y=rlagged)) + labs(y="rlagged", title="Figure 5: Lagged Correlations")
+```
+
+
+
+# Part 2: Getting the interpretation of correlation correct.
+
+
+1. In regard to the first part, which of the following is more correct and explain.
+  - A positive correlation between tree ring width and January precipitation might happen because January is often (but not always) wetter than the average month.
+  - A positive correlation between tree ring width and January precipitation might happen if dryer-than-average Januarys are associate with smaller-than-average tree ring widths.
+  
+  --The second statement is more correct than the first. How wet january is compared to other months tells us nothing about how it relates to ring widths. The second statement, on the other hand, tells us that smaller-than-average levels of precipitation are associated with smaller-than-average tree ring widths. Knowing this relationship, I am more likely to assume that larger-than-average precipitation values may cause larger-than-average tree ring widths. This would create a positive correlation.
+
+2. 
+  - Would the correlation between the age of a second-hand car and its price be positive or negative?  Why?  (Antiques are not included.)
+  - How would including antique cars change your response?
+  
+--This would be a negative correlation. As the age of cars increases, the price goes down, since older models are not valued as much. However, if we include antique cars, then there may be an upwards curve towards the end of the line, due to very old cars with very high price values. 
+
+3. True or False, and explain: if the correlation coefficient is 0.90, then 90% of the points are highly correlated.
+--False. This means that 90% of the y-values can be predicted by using the x-values.
+
+
+4. An economist is studying the relationship between household income and teenage pregnancy in the United States.  She has data for each of the 50 states, showing the average household income of families with teenagers, and the rates of pregnancy among teenage girls in that state.  The correlation is 0.4.  Does this give a fair estimate of the strength of the association between household income and teenage pregnancy? Explain.
+
+-- Well, there's many variables that also go into this relationship. However, speaking only of the value of 0.4, this would suggest a loosely associated relationship. So, I guess if the relationship between household income and teenage pregnancy is loosely associated, then yes a 0.4 correlation is a fair estimate.
+
+5. Three data sets are collected and the correlation coefficient is computed in each case.  The variables in the datasets are:
+  - grade point average in freshman year and sophomore year in college.
+  - grade point average in freshman year and senior year in college.
+  - length and weight of two-by-four boards of lumber.
+  
+  Possible values for correlation coefficients are: -0.5,   0.0,   0.3,  0.6,  0.95.  Match the correlations with the data sets; two will be left over.  Explain your answers.
+  
+  - grade point average in freshman year and sophomore year in college: 0.6
+    --GPA's from freshman and sophomore year shouldn't change much. In the span of one year, it's unlikely for anyone's scores to skyrocket or plummet from their original location. It's likely the grades will be similar, leading to a positive correlation with a decent correlation. However, there are always outliers, such as someone who flunks one class one semester out of the blue, lowering the value of the correlation. I would guess around .6 however, though a little bit lower wouldn't be out of the question.
+    
+  - grade point average in freshman year and senior year in college: 0.3
+    Generally, I would think students would improve their GPA through time. However, all students are different. Some may try harder during their senior year, others may slack off and not care as much their senior year. So, I would guess a correlation of .3 since there may be a general positive trend, but not anything strong.
+   
+  - length and weight of two-by-four boards of lumber: 0.95
+    --Since the thickness and width of the board remains constant, it is easier to guess a relatonship. As the board gets longer, it will be proportionately heavier. Therefore, I would assume a fairly high and positive correlation, and 0.95 made the most sense.
+
+6. Studies find a negative correlation between hours spent watching television and scores on reading tests.  Does watching television make people less able to read?  Discuss briefly.
+We cannot say that, because correlation does not equal causation. There could be another variable causing individuals to both watch a lot of television and also do well on reading tests, but that does not mean watching tv makes people less able to read.
