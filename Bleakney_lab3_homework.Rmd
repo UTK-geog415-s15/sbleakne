@@ -1,0 +1,48 @@
+---
+title: "Lab 3 - Homework"
+output: html_document
+---
+
+1. For the first three diagnostic plots, describe wich assumptions they help to visually evaluate.
+--Based on the plots, we can see that N is obviously large through all of the different points, evaluating assumption 4. With plot one, we see that the errors are uncorrelated, evaluating assumption 3. With the residuals vs fitten plot, we do not see any difference in variation along the line, showing that the graph is not heteroskedastic.
+
+2. These data are time series data.  In general, data are correlated in time, and this would be a problem for simple linear regression.  Plot the regression residuals vs time, and visually assess whether there is evidence of temporal (serial) correlation.
+
+```{r}
+ggplot(data=rwi.precip.df) + geom_line(aes(x=year, y=resid)) + scale_x_continuous(limits=c(1890, 2000))
+```
+--I do not see a correlation because the data is quite scattered, and there is no obvious negative or positive trend
+
+3. In the data folder is the dataset GalapagosData.txt.  The species data represents the number of species recorded from each of the Galapagos islands. A fundamental 'law' of island biogeography is that species diversity tends to follow a power law relationship with island area, i.e. $$\mbox{species} = \alpha\times{\mbox{area}^\beta}$$  
+This is not linear, but it suggests that the following regression might make sense: 
+$$\log(\mbox{species}) = a + \beta \times log(\mbox{area})$$
+$a$ is not quite $\alpha$, rather $a=\log(\alpha)$.  
+Fit this regression, and present a brief write-up that a) describes the results in words, and b) summarizes your conclusions from diagnostic model checking.
+
+```{r}
+lm(data=GalapagosData, log(Nspecies)~log(Area))
+
+summary(lm(data=GalapagosData, log(Nspecies)~log(Area)))
+```
+
+We can see that, through some manipulation, the data have a rough linear correlation. So, species diversity and island area do appear to roughly follow a power law. 
+
+lm(formula = log(Nspecies) ~ log(Area), data = GalapagosData)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-1.37282 -0.75233  0.06034  0.59768  1.04971 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  3.03895    0.32728   9.286 1.31e-07 ***
+log(Area)    0.33059    0.07194   4.595  0.00035 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.7378 on 15 degrees of freedom
+Multiple R-squared:  0.5847,  Adjusted R-squared:  0.557 
+F-statistic: 21.12 on 1 and 15 DF,  p-value: 0.0003501
+
+
+With a p-value of 0.0003501, I'd say this looks to be a fairly significant relationship. 
