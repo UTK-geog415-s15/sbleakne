@@ -1,0 +1,192 @@
+---
+title: "Lab 4"
+author: "Sarah Bleakney"
+date: "March 30, 2015"
+output: html_document
+---
+
+1. Two-sample T-test> ACT scores
+Consider the hypothesis that college-bound males and females have the same average ACT scores.
+```{r}
+act <- read.table('ACT_scores.txt', header=TRUE)
+
+```
+ a. Write out the hypothesis that is tested by a two-sample t-test in this case.
+
+Null Hypothesis: There is no difference between mean ACT scores of college-bound males and females
+ 
+ b. Using boxplots and summary statistics, report on the suitability of these data for a two-sample t-test to evaluate the hypothesis that the means are not different
+ 
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(magrittr)
+```
+
+ 
+ 
+```{r}
+new_act %>% group_by(sex) %>% summarize(m=mean(score), s=sd(score), n=n())
+
+ggplot(new_act, aes(x=sex,y=score,fill=sex)) + geom_boxplot()
+
+new_act %>% group_by(sex) %>% summarize(m=mean(score), sd=sd(score), n=n() )
+```
+
+As we can see in the above boxplot, the data is varied between the two groups. The scores of males in the red boxplot have a larger spread and a slightly lower mean. The scores of females have a more condensed data set around the mean with a few extreme outliers. What we can visually see is the proximity of the two means to one another. Because the mean of females falls within the IQR of males (and vice-versa) it is very unlikely the means will have a significant difference. When we look at our numbers in the summary statistics, we can see that the males have a mean of 20.86 and the females have a mean of 20.50. With the fairly large standard deviations (7.999 and 6.198), these means are quite close. Gives all of this information I would assume we will not be able to reject the hypothesis that the means are not different.
+ 
+ c. Conduct a t-test to evaluate the hypothesis that mean ACTs are different
+ 
+```{r}
+t.test(act$Males,act$Females)
+```
+
+With a p-value of 0.8754, I cannot reject the hypothesis that the means are not different
+
+
+2.  Two-sample t-tests.  Cloud Seeding.
+
+These data were collected in Southern Florida between 1968 and 1972 to test a hypothesis that seeding silver iodide into clouds can promote rainfall.  They appear in a number of intriductory texts, including a favorite intermediate text of mine: Ramsay and Schafer's The Statistical Sleuth.  The data contain 52 weather events that were deemed suitable for seeding.  On each day an airplane flew the clouds and a payload was released.  It was randomly determined whether the payload would contain silver iodide or not, but the pilots were unaware of this, i.e. the pilots were blind to the treatment.  Following the flight, radar was used to measure the precipitation falling from the cloud (in units of acre-feet). 
+```{r}
+library(Sleuth3)
+data(case0301)
+head(case0301)
+# Here are two ways to calculate a boxplot
+# boxplot(Rainfall~Treatment, data=case0301)
+# library(ggplot2)
+# ggplot(data=case0301) + geom_boxplot(aes(x=Treatment, y=Rainfall))
+
+# Here are two ways to calculate some summary statistics
+#tapply(X=case0301$Rainfall, INDEX=case0301$Treatment, FUN=mean) # Calculate mean, repeat for sd
+#library(dplyr)
+#case0301 %>% group_by(Treatment) %>% summarize(m=mean(Rainfall), sd=sd(Rainfall), n=n() )
+```
+
+ a. Using boxplots and summary statistics, report on the suitability of these data for a two-sample t-test to evaluate the hypothesis that seeding influences rainfall.
+ 
+```{r}
+case0301 %>% group_by(Treatment) %>% summarize(m=mean(Rainfall), sd=sd(Rainfall), n=n() )
+
+ggplot(data=case0301) + geom_boxplot(aes(x=Treatment, y=Rainfall))
+```
+ 
+Starting first with summary statistics, we can see that n is decently large (52 total) which is an appropriate size for a t-test. The means are vastly different, but the standard deviations of both seeded and unseeded are very large. Looking now to the boxplot, the mean of unseeded lies below the IQR of seeded.That makes me think there is a chance of there being a slightly significant difference between seeded and unseeded. 
+ 
+ 
+ b. Conduct a t-test to evaluate the hypothesis that seeding influences rainfall and report the result.
+ 
+```{r}
+t.test(case0301$Rainfall~case0301$Treatment)
+```
+ 
+ 
+The p-value of .053 is slightly bigger than .05 and therefore I wouldn't be comfortable rejecting the hypothesis that the true difference in means is 0 between seeded and unseeded rainfall. However it is very close.
+ 
+ c. Repeat a. and b. using a log-transform of the rainfall measurement.  Which analysis do you prefer and why?
+ 
+```{r}
+new_case0301$log <- log(new_case0301$Rainfall)
+new_case0301 %>% group_by(Treatment) %>% summarize(m=mean(log), sd=sd(log), n=n() )
+ggplot(data=new_case0301) + geom_boxplot(aes(x=Treatment, y=log))
+t.test(new_case0301$log~case0301$Treatment)
+```
+
+
+The mean of seeded is 5.13, and the mean of unseeded is 3.99. The standard deviations are much smaller than before the transformation; seeded has 1.5995 and unseeded has 1.6418, which makes sense with the log transformations. The boxplots are easier to understand without such a large scale and so many extreme outliers. The IQR of the boxplots still overlap so it's not a clear difference, but the mean of Seeded lies outside of the IQR of Unseeded, and vice versa.
+The p-value calculated with the log values comes out to .014, which is much more significant than the p-value of .053 calculated with the regular rainfall rates. With this I would reject the null hypothesis.
+I prefer the second analysis using the log of rainfall. It takes care of the extreme outliers and smooths out the data set a bit, which makes it easier to interpret using the boxplot and also leads to significant results. 
+
+
+ 
+ d. Why is it important that the pilots were unaware of whether they were seeding or not?
+ 
+ The pilots could potentially skew the results. Making this a blind experiment for them means they cannot subconsciously do something different whenever they are seeding versus not seeding. It's a way to control for other potential bias.
+ 
+ e. Unfortunately, we do not have the date of the weather event.  Why would it be helpful to have  this information?
+ 
+ 
+With the date, we could see what month these results were gathered. We could look at how rainfall rates varied per month in this location and control for that seasonal variation. The time of day could also be helpful. There could be a bias if most of the seeded clouds happened on summer afternoons where it is likely to rain already for example.
+
+
+2. ANOVA
+
+Here are some simple data describing average daily temperatures for different cities grouped by season.
+```{r data entry}
+# Create a dataset
+temp = c(60,65,62,64,63,80,85,82,84,83,90,95,101,99,100)
+season = rep( c('Fall', 'Spring', 'Summer'), times=c(5,5,5))
+
+data <- data.frame(temp=temp, season=season)
+
+```
+
+For the air temperature data, conduct an ANOVA and use the F-statistic to test the hypothesis that air temperature varies by season.
+
+
+```{r}
+aov.ex1 = aov(temp~season,data=data)  
+summary(aov.ex1)                                    
+print(model.tables(aov.ex1,"means"),digits=3)       
+```
+
+
+With an F-value of 158.7, I can conclude that there is a highly significant difference in temperature between seasons in this dataset. Our tiny p-value (2.34e-09) supports this claim.
+
+3.  Spock Conspiracy Trial.
+
+This is another classic dataset. Dr. Benjamin Spock was a pediatrician who wrote a very popular book in 1948.  In 1968, Dr Spock was accused of conspiring to violate the Selective Services Act by helping young men to medically avoid the military draft during the Vietnam War.  His defence challeneged the case on the grounds that the jury did not contain a single woman, and therefore could not be random.
+
+These data used here contain jury compositions for Spock's judge and 6 other judges in the same court.  For each jury, we have the fraction of the jury that was female.
+
+```{r}
+data(case0502)
+```
+
+ a. Qualitatively describe these data using boxplots and summary statistics.
+ 
+```{r}
+case0502 %>% group_by(Judge) %>% summarize(m=mean(Percent), sd=sd(Percent), n=n() )
+
+ggplot(data=case0502) + geom_boxplot(aes(x=Judge, y=Percent))
+```
+
+As we can see from the summary statistics, all of the Judge's mean percentage of women on the jury (except for Spocks's) are in the 20's or 30's, with Judge F having the lowest mean of 26.8 and Judge A having the highest mean of 34.12. Spock's mean lies much lower than all of these at 14.62. The standard deviations are also quite high, varing from 3.8 for Judge D to 11.94 for Judge A.
+The boxplot shows Spock's values as much lower visually than the rest of the judges. The IQR of Spock's data does not overlap with the IQR of any other judge. This makes me think there will be a significant difference between the fraction of the jury that was female in Spock's trial versus all other judges.
+
+
+ b. Using an ANOVA, test the hypothesis that all of the judges have the same jury compositions on average and report your results.
+ 
+```{r}
+aov.ex2 = aov(Percent~Judge,data=case0502)  
+summary(aov.ex2)                                          
+```
+ 
+ 
+With a F-value of 6.718, I would reject the hypothesis that all judges have the same jury composition on average.
+ 
+ 
+ c. Grouping together Judges A-F, perform a two-sample t-test to test the hypothesis that Spock's judge consistently chooses juries with lower than expected women.
+ 
+```{r}
+case0502$Judge2 <- case0502$Judge == "Spock's"
+t.test(case0502$Percent~case0502$Judge2)
+```
+ 
+ 
+With a p-value of 1.303e-06, I can conclude that Spock's judge did consistently choose juries with lower than expected women.
+ 
+ 
+ d. Use another ANOVA to evaluate whether or not it was suitable to group together the other 6 judges.
+ 
+```{r}
+aov.ex4 = aov(V2~V1,data=Judges5)  
+summary(aov.ex4)                                          
+```
+
+This ANOVA tests tells me that there is not significant variance between the other judges (as seen through an F-value of 1.218) and that it was in fact suitable to group the 6 judges together.
+ 
+ e. How should your interpretation of the results in part (c) change if you rejected the hypothesis the other six judges were not all statistically the same?
+ 
+ If that were the case, then when I rejected the claim that all judges had the same composition of juries on average, my results could be pointing to another judge that had significantly different jury composition and not Spock's jury. The only way our previous results make sense is if the other six judges were the same. 
+

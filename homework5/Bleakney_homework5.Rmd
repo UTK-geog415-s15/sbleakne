@@ -1,0 +1,132 @@
+---
+title: "Homework 5"
+author: "Sarah Bleakney"
+date: "March 30, 2015"
+output: html_document
+---
+
+For this assigment you will use a dataset of housing prices in Boston.
+These data were used in an early publication in environmental economics to study the effect of air quality on housing price.
+You can get a copy of the data in the spdep R package.
+Don't forget to use `install.packages` if you need to!
+
+```{r, message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(magrittr)
+install.packages ("spdep")
+library(spdep)
+data(boston)
+```
+
+There is a codebook in the help file for this dataset
+```{r}
+help(boston)
+```
+
+```{r}
+head(boston.c)
+```
+
+Most of these variables were selected because Economic theory suggests that each should impact median value.  A scatterplot matrix is a helpful to quickly visualize many bivariate relations.  I like the scatterpot matrix function in the GGally package called `ggpairs`.
+Sorry it looks so bad printed out.  It's better on a big screen.
+```{r, message=FALSE}
+library(ggplot2)
+library(dplyr)
+install.packages ("GGally")
+library(GGally)
+boston.c %>% mutate(logMEDV = log(CMEDV), logDIS=log(DIS)) %>% 
+  select(AGE, RM, logDIS, B, LSTAT, PTRATIO, NOX, logMEDV) %>% ggpairs()
+```
+
+We are trying to understand the various determinants of house price, including air pollution.
+One of the most important aspects of house price in the US is suburbanization.
+From the scatterplots, we see a significant relationship between value and distance.
+It may be helpful to map this out.
+You could use Latitude and Longitude to map it out, but it is better to use projected coordinates, which are in units of meters, rather than in units of geographic degrees.
+Fortunately, these have already been calculated for you.  
+(Note, a GIS course would teach you more about projections.  
+You could do the projection using GIS software like Quantum GIS or ArcGIS, or you could do it in R using the spTransform function in the sp package.)
+
+
+```{r}
+boston.c$X <- boston.utm[,1]
+boston.c$Y <- boston.utm[,2]
+ggplot(boston.c) + geom_point(aes(x=X, y=Y, color=log(DIS)))
+```
+
+# Homework Assignment:
+1. Using the scatterplot matrix (`ggpairs`), 
+ a. Describe the correlates of house price.
+ 
+--House price tends to correlate with all of the other variables. The strongest correlation is -0.809, the correlation between logMEDV and LSTAT (percentage values of lower status population). Other significant numbers include 0.633, the correlation coefficient between number of rooms and house prices. -0.513 is the value given for nitric oxides concentration and house value. These numbers confirm what we could have already guessed: median values of owner-occupied housing is related  to the percentage of lower status population, the number of rooms, and nitric oxides concentration.
+ 
+ b. Describe the correlates of NOX (Nitrus Oxide).
+ 
+Nitrus Oxide is the mostly strongly correlated with logDIS (the log of weighted distances to five boston employment centres) with a value of -0.832. It is also correlated with age with a value of .731. This isn't surprising; it's expected that pollution will decrease as distance from the city increases. It also makes sense that older houses will be closer to the center of the city, and that they will get younger towards the outskirts of the city as it expands.
+ 
+ 
+2. Imagine the multivariate regression of log(CMEDV) on NOX, AGE, log(DIS), RM, CRIM, PTRATIO, B, LSTAT, and CHAS.  DO NOT RUN THE REGRESSION YET.  For each of these variables, predict whether you think the regression coefficient will be positive or negative, and why.  Remember, the multivariate regression relationship is the relationship AFTER you hold the other values fixed.  So, for instance to think about the relationship between Distance and value, you should think like: "Imagine two houses that have the same age, same number of rooms, same racial and ethnic neighborhood, same tax rate, etc.  Now move one of those houses farther from workplaces.  Should that change increase or decrease housing value."  Answer: Economic theory suggest that everything else equal, being far from work is a bad thing.  Note, the Charles River is a particulurly industrial part of town.
+
+
+NOX (Nitric Oxides concentration): I would guess a negative relationship, because as nitric oxide concentrations increase, the value of housing would decrease, since poor air quality is not desirable.
+
+AGE (proportions of units built priod to 1940): I would assume it is a negative relationship. As the age of an area or neighborhood increases, the housing value will decrease, since older houses may not be as nice or expensive as newer houses.
+
+log(DIS) (weighted distances to five Boston employment centres): I would assume a negative relationship. As the distance from employment centres increases, the housing value will decrease, since a shorter commute is desirable.
+
+RM (average number of rooms per dwelling): I would think a positive relationship. As the number of rooms increase, the value of a house will also increase, since that often means the house is larger and therefore more valuable.
+
+CRIM (per capita crime): As crime increases housing value decreases, leading to a negative relationship, since it is not desirable to live around high crime rates.
+
+PTRATIO (pupil-teacher ratios per town): The higher a pupil-teacher ratio, the higher the housing value will be, so likely a positive relationship since families desire better school systems.
+
+B (proportion of blacks): Potentially the higher the proportion of blacks the lower the housing value, so a negative relationsip. But, with other factors removed that may not be the case, and there may be no relationship. 
+
+LSTAT (percentage values of lower status population): As the percentage of lower status population increases, housing value will likely decrease, resulting in a negative relationship. 
+
+CHAS (tracts borders Charles River): If a tract borders the Charles River, I would guess it has a higher value due to aesthetics, leading to a positive value.
+
+
+
+3. One of the relationships is a negative relationship between Distance from Work (primarily Boston) and House Value.  Fit a bivariate regression between log CMEDV and log DIS
+
+```{r}
+fit <- lm(log(CMEDV) ~ log(DIS), data=boston.c)
+summary(fit)
+```
+
+
+ a. Report the slope of this regression and interpret it's value.
+ 
+ --The slope is .307
+ That means that for every 1% increase in distance there is a .307% increase in housing value.
+
+ 
+ b. Report approximate 95% confidence intervals for the slope.
+ 
+ Interval: .247 to .367
+ 
+4. Fit the linear regression from question 2.
+
+```{r}
+fit2 <- lm(log(CMEDV) ~ log(DIS) + NOX + AGE + RM + CRIM + PTRATIO + B + LSTAT + CHAS, data=boston.c)
+summary(fit2)
+```
+
+
+ a. Report the coefficient of log Distance.  Interpret it's value and report it's 95% confidence interval.
+ 
+ -0.249, with a 95% confidence interval from -.185 to -.313
+ 
+ This coefficient of -0.249 means that there is a negative relationship between distance and house value once the other variables are taken away. So, for every 1% increase in housing value, there is a decrease of -.249% in distance. So, the farther away a house is from the employment centres, the more the housing value decreases.
+ 
+ b. Explain why the coefficient on log Distance changed so dramatically from in question 3.
+ Well, when other factors were taken into account, it took away all other variables that also come into effect. For instance, newer houses tend to be farther from employment centres. Also, high air quality farther from town. These will lead to higher housing prices out in the suburbs, skewing the previous results. However, with all of these factors being held constant, an increase in distance negatively affects housing price.
+ 
+ 
+ c. Come to a conclusion regarding the relationship of air quality (measured by NOX).  Is there evidence that NOX has a relationship on house value?  Be sure to describe both the value of that relationship and the possible range of values.
+ 
+ NOX has a very strong negative relationship with house value, with a value of -0.925. The 95% confidence interval ranges from -1.205 to -.645. This value indicates that for every 1 unit increase of nitric oxide concentrations, there is an decrease of .925% in housing value, though that usually can range from -1.205 to -.645. I still think there could be more variables we are missing however. I can't imagine potential home buyers checking the air quality of a neighborhood before moving in. It could have to do with the number of trees for example, which would both help with air quality as well as add aethetics locally.
+ 
